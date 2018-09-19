@@ -167,6 +167,34 @@ class RodWithAnchors implements IState{
         // console.log("Rod energy: " + rodEnergy + " Anchor energy: " + anchorEnergy);
         return anchorEnergy + rodEnergy;
     }
+
+    clipToAnchors(): RodWithAnchors {
+        let outPoints = this.points;
+
+        let startIndex = 0;
+        let endIndex = 0;
+        let startDist = Number.POSITIVE_INFINITY;
+        let endDist = Number.POSITIVE_INFINITY;
+        for(let i = 0; i < this.points.length; i++) {
+            let testDistStart = this.anchors[0].dist(this.points[i]);
+            let testDistEnd = this.anchors[this.anchors.length - 1].dist(this.points[i]);
+            if(testDistStart < startDist) {
+                startIndex = i;
+                startDist = testDistStart;
+            }
+
+            if(testDistEnd < endDist) {
+                endIndex = i;
+                endDist = testDistEnd;
+            }
+        }
+
+        outPoints = this.points.slice(Math.min(startIndex, endIndex), Math.max(startIndex, endIndex));
+
+        return new RodWithAnchors(outPoints, this.anchors, this.rodStiffness, this.anchorStiffness);
+    }
+
+    rescale(): RodWithAnchors { return this;}
 }
 
 class SimulatedAnnealingManager<State extends IState> {
