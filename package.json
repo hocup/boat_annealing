@@ -1,0 +1,14 @@
+{
+  "name": "sa_sticks",
+  "version": "1.0.0",
+  "description": "A dumb little project that does some simulated annealing on flexible rods passing through set of points",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "typescript": "^3.0.1"
+  }
+}
