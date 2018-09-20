@@ -194,7 +194,18 @@ class RodWithAnchors implements IState{
         return new RodWithAnchors(outPoints, this.anchors, this.rodStiffness, this.anchorStiffness);
     }
 
-    rescale(): RodWithAnchors { return this;}
+    rescale(numPoints: number): RodWithAnchors { 
+        let outPoints = [];
+        for(let i = 0; i < numPoints; i++) {
+            const pos = this.points.length*i/numPoints;
+            const pA = this.points[Math.floor(pos)];
+            const pB = this.points[Math.floor(pos+1)];
+            const remainder = pos % 1;
+            const newP = pA.scale(1 - remainder).add(pB.scale(remainder));
+            outPoints.push(newP);
+        }
+        return new RodWithAnchors(outPoints, this.anchors, this.rodStiffness, this.anchorStiffness);
+    }
 }
 
 class SimulatedAnnealingManager<State extends IState> {
@@ -365,8 +376,8 @@ function takeStep() {
         clearCanvas(sideViewContext)
         for(let i = 0; i < saManagers.length; i++) {
             let saManager = saManagers[i];
-            drawRod(saManager.state, topDownViewContext);
-            drawRod(saManager.state, sideViewContext, sideViewProjection);
+            drawRod(saManager.state.clipToAnchors(), topDownViewContext);
+            drawRod(saManager.state.clipToAnchors(), sideViewContext, sideViewProjection);
         }
         
     }
@@ -402,11 +413,13 @@ function drawRod(rod: RodWithAnchors, drawContext: CanvasRenderingContext2D, pro
     drawContext.moveTo(p[0] + cWidth/2, p[1] + cHeight/2);
     for(let i = 0; i < rod.points.length; i++) {
         p = projectionFunction(rod.points[i]);
-        if(rod.points[i].y > 0) {
-            drawContext.lineTo(p[0] + cWidth/2, p[1] + cHeight/2);
-        } else {
-            drawContext.moveTo(p[0] + cWidth/2, p[1] + cHeight/2);
-        }
+        // if(rod.points[i].y > 0) {
+        //     drawContext.lineTo(p[0] + cWidth/2, p[1] + cHeight/2);
+        // } else {
+        //     drawContext.moveTo(p[0] + cWidth/2, p[1] + cHeight/2);
+        // }
+
+        drawContext.lineTo(p[0] + cWidth/2, p[1] + cHeight/2);
     }
     drawContext.stroke();
 
