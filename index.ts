@@ -208,6 +208,41 @@ class RodWithAnchors implements IState{
     }
 }
 
+class Panel {
+    points: Point3d[];
+
+    constructor(rodA: RodWithAnchors, rodB: RodWithAnchors) {
+        // Make sure the rods have the same # of points
+        const maxLength: number = Math.max(rodB.points.length, rodA.points.length);
+        rodA = rodA.rescale(maxLength);
+        rodB = rodB.rescale(maxLength);
+
+        this.points = [];
+        this.points[0] = new Point3d(0,0,0);
+        this.points[1] = new Point3d(0, rodA.points[0].dist(rodB.points[0]), 0);
+
+        for(let i = 2; i < 2*maxLength; i++ ) {
+            let p1: Point3d;
+            let p2: Point3d;
+
+            let np: Point3d;
+
+            if(i%2 == 0) {
+                p1 = rodA.points[i/2 - 1];
+                p2 = rodB.points[i/2 - 1];
+                np = rodA.points[i/2];
+            } else {
+                p1 = rodA.points[(i-1)/2];
+                p2 = rodB.points[(i-1)/2 - 1];
+                np = rodB.points[(i-1)/2];
+            }
+
+            const d1: number = np.dist(p1);
+            const d2: number = np.dist(p2);
+        }
+    }
+}
+
 class SimulatedAnnealingManager<State extends IState> {
     
     public currentStep: number = 0;
