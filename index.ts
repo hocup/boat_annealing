@@ -2,6 +2,34 @@ class Point3d {
     
     constructor(public x: number, public y: number, public z: number) {}
 
+    static onXYAtDistsFromTwoPoints(A: Point3d, B: Point3d, dA: number, dB: number) {
+        
+        // A and B should already by on the XY plane
+        const At: Point3d = A.add(B.scale(-1));
+        if(At.x !== 0) {
+            const R: number = -At.y/At.x;
+            const Beta: number = ((dB**2 - dA**2) + (At.x **2 + At.y**2))/(2*At.x);
+
+            const Cty = MathHelper.quadraticEq(1 + R**2, 2*Beta*R, Beta**2 - dB**2);
+
+            return Cty.map(Cy => {
+                const Cx = R*Cy + Beta;
+                return new Point3d(Cx, Cy, 0).add(B);
+            });
+        } else if (At.y !== 0) {
+            const Cty = (dA**2 - dB**2 - At.y**2)/(-2*At.y);
+            const Ctx = Math.sqrt(dB**2 - Cty**2);
+            return [
+                new Point3d(Ctx, Cty, 0).add(B),
+                new Point3d(-Ctx, Cty, 0).add(B),
+            ]
+        } else {
+            return [ 
+                new Point3d(dA, 0, 0).add(B), 
+                new Point3d(-dA, 0, 0).add(B) ];
+        }
+    }
+
     dotProduct(other: Point3d): number {
         return other.x*this.x + other.y*this.y + other.z*this.z;
     }
@@ -199,7 +227,7 @@ class RodWithAnchors implements IState{
         for(let i = 0; i < numPoints; i++) {
             const pos = this.points.length*i/numPoints;
             const pA = this.points[Math.floor(pos)];
-            const pB = this.points[Math.floor(pos+1)];
+            const pB = this.points[Math.floor(Math.min(pos+1, this.points.length -1))];
             const remainder = pos % 1;
             const newP = pA.scale(1 - remainder).add(pB.scale(remainder));
             outPoints.push(newP);
@@ -227,19 +255,32 @@ class Panel {
 
             let np: Point3d;
 
+            // TODO: FIXME
             if(i%2 == 0) {
                 p1 = rodA.points[i/2 - 1];
                 p2 = rodB.points[i/2 - 1];
                 np = rodA.points[i/2];
             } else {
                 p1 = rodA.points[(i-1)/2];
-                p2 = rodB.points[(i-1)/2 - 1];
+                p2 = rodB.points[(i-1)/2 - 1]; // I don't think this is right
                 np = rodB.points[(i-1)/2];
             }
 
             const d1: number = np.dist(p1);
             const d2: number = np.dist(p2);
+
+            console.log("d1: ", d1, "d2: ", d2);
+            console.log("p1: ", p1, "p2: ", p2);
+
+            const quadr = Point3d.onXYAtDistsFromTwoPoints(this.points[i-2], this.points[i-1], d1, d2);
+            console.log(quadr);
+
+            if(isNaN(quadr[0].x)) throw("cool error bro")
+
+            this.points[i] = quadr[1];
         }
+
+        console.log(this.points);
     }
 }
 
@@ -314,9 +355,6 @@ class MathHelper {
         if(cosB < -1) {
             return Math.PI;
         }
-        // const translatedB = segB[1].add(segA[0].scale(-1))
-        // const cosB = translatedB.dotProduct(nA);
-        // const sinB = Math.sqrt(Math.abs(Math.pow(translatedB.length(),2) - Math.pow(cosB, 2)));
 
         return Math.acos(cosB);
     }
@@ -331,6 +369,13 @@ class MathHelper {
         out[1] = Math.sqrt(-2*Math.log(u1)) * Math.sin(2*Math.PI*u2);
 
         return out;
+    }
+
+    static quadraticEq(a, b, c): [number, number] {
+        // For equtns of form a*x^2 + b*x + c = 0
+        console.log("quadding", a, b, c, b**2 - 4*a*c)
+        const sqrtTerm = Math.sqrt(b**2 - 4*a*c);
+        return [(-b + sqrtTerm)/(2*a), (-b - sqrtTerm)/(2*a)];
     }
 }
 
@@ -360,9 +405,9 @@ function start() {
 
     let anchors: Point3d[][] = [
         [
-            new Point3d(-100,0,10),
+            new Point3d(-100,0,15),
             new Point3d(0,29,10),
-            new Point3d(100,0,10),
+            new Point3d(100,0,15),
         ],
         [
             new Point3d(-105, 0, 0),
@@ -393,15 +438,19 @@ function start() {
         let rodLength = 80;
         const step = 200/rodLength;
         const points: Point3d[] = [];
-        for(let i = 0; i < rodLength; i++) {
-            points.push(new Point3d(0.5*step*rodLength - step*i, 0, -10));
+        for(let j = 0; j < rodLength; j++) {
+            points.push(new Point3d(0.5*step*rodLength - step*j, 0, anchors[i][0].z));
         }
 
         let startRod = new RodWithAnchors(points, anchors[i], 70, 300);
-        saManagers[i] = new SimulatedAnnealingManager<RodWithAnchors>(startRod, 7500);
+        saManagers[i] = new SimulatedAnnealingManager<RodWithAnchors>(startRod, 1000/*7500*/);
     }
 
     takeStep();
+    let a = new Point3d(2,-4,0);
+    let b = new Point3d(2,4,0);
+    console.log(Point3d.onXYAtDistsFromTwoPoints(a,b,4,4));
+    console.log(Point3d.onXYAtDistsFromTwoPoints(a,b,5,4));
 }
 
 function takeStep() {
@@ -423,6 +472,12 @@ function takeStep() {
         
     } else {
         console.log("DONE");
+        const aPanel = new Panel(saManagers[0].state, saManagers[1].state);
+
+        // TEMP FOR DRAWING
+        const panelRod = new RodWithAnchors(aPanel.points, [], 0, 0);
+        clearCanvas(sideViewContext);
+        drawRod(panelRod, sideViewContext);
         // saManager = new SimulatedAnnealingManager<RodWithAnchors>(saManager.state);
         // takeStep();
     }
