@@ -249,38 +249,40 @@ class Panel {
         this.points[0] = new Point3d(0,0,0);
         this.points[1] = new Point3d(0, rodA.points[0].dist(rodB.points[0]), 0);
 
+        const a = (i) => i/2;
+        const b = (i) => (i-1)/2;
+
         for(let i = 2; i < 2*maxLength; i++ ) {
             let p1: Point3d;
             let p2: Point3d;
 
             let np: Point3d;
 
-            // TODO: FIXME
             if(i%2 == 0) {
-                p1 = rodA.points[i/2 - 1];
-                p2 = rodB.points[i/2 - 1];
-                np = rodA.points[i/2];
+                p1 = rodA.points[a(i-2)];
+                p2 = rodB.points[b(i-1)];
+                np = rodA.points[a(i)];
             } else {
-                p1 = rodA.points[(i-1)/2];
-                p2 = rodB.points[(i-1)/2 - 1]; // I don't think this is right
-                np = rodB.points[(i-1)/2];
+                p1 = rodB.points[b(i-2)];
+                p2 = rodA.points[a(i-1)];
+                np = rodB.points[b(i)];
             }
 
             const d1: number = np.dist(p1);
             const d2: number = np.dist(p2);
 
-            console.log("d1: ", d1, "d2: ", d2);
-            console.log("p1: ", p1, "p2: ", p2);
-
             const quadr = Point3d.onXYAtDistsFromTwoPoints(this.points[i-2], this.points[i-1], d1, d2);
-            console.log(quadr);
 
-            if(isNaN(quadr[0].x)) throw("cool error bro")
+            if(i > 3) {
+                this.points[i] = this.points[i-3].dist(quadr[0]) > this.points[i-3].dist(quadr[1]) ? quadr[0] : quadr[1];
+            } else {
+                this.points[i] = quadr[0];
+            }
 
-            this.points[i] = quadr[1];
         }
 
-        console.log(this.points);
+        // console.log(this.points);
+
     }
 }
 
@@ -373,7 +375,7 @@ class MathHelper {
 
     static quadraticEq(a, b, c): [number, number] {
         // For equtns of form a*x^2 + b*x + c = 0
-        console.log("quadding", a, b, c, b**2 - 4*a*c)
+        // console.log("quadding", a, b, c, b**2 - 4*a*c)
         const sqrtTerm = Math.sqrt(b**2 - 4*a*c);
         return [(-b + sqrtTerm)/(2*a), (-b - sqrtTerm)/(2*a)];
     }
@@ -472,7 +474,7 @@ function takeStep() {
         
     } else {
         console.log("DONE");
-        const aPanel = new Panel(saManagers[0].state, saManagers[1].state);
+        const aPanel = new Panel(saManagers[0].state, saManagers[2].state);
 
         // TEMP FOR DRAWING
         const panelRod = new RodWithAnchors(aPanel.points, [], 0, 0);
