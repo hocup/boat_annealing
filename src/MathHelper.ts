@@ -29,8 +29,36 @@ class MathHelper {
 
     static quadraticEq(a, b, c): [number, number] {
         // For equtns of form a*x^2 + b*x + c = 0
-        // console.log("quadding", a, b, c, b**2 - 4*a*c)
         const sqrtTerm = Math.sqrt(b**2 - 4*a*c);
         return [(-b + sqrtTerm)/(2*a), (-b - sqrtTerm)/(2*a)];
+    }
+
+    static inRange(v: number, range: [number, number]) {
+        return v >= Math.min(range[0], range[1]) && v <= Math.max(range[0], range[1]);
+    }
+}
+
+class Plane {
+    constructor(public center: Point3d, public normal: Point3d) {}
+
+    intersectsSegment(segment: [Point3d, Point3d]): Point3d {
+        let out = null;
+        const translatedSegment = segment.map(p => p.add(this.center.scale(-1)));
+        const projectOnNormal: [number, number] = 
+            <[number, number]> translatedSegment.map((v): number => v.dotProduct(this.normal));
+        
+        if(MathHelper.inRange(0, projectOnNormal)) {
+            const p = Math.abs(projectOnNormal[0] - projectOnNormal[1]);
+            if(projectOnNormal[0] === 0) {
+                out = segment[0];
+            } else if(projectOnNormal[1] === 0) {
+                out = segment[1];
+            } else if(p != 0) {
+                
+                out = segment[1].scale(Math.abs(projectOnNormal[0])/p)
+                    .add(segment[0].scale(Math.abs(projectOnNormal[1])/p));
+            }
+        }
+        return out;
     }
 }

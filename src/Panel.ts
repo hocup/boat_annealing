@@ -41,6 +41,8 @@ class Panel {
                 this.points[i] = quadr[0];
             }
 
+            console.log(d1, d2, this.points[i]);
+
         }
     }
 }

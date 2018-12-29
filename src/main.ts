@@ -1,3 +1,5 @@
+///<reference path="../lib/svg.js.d.ts" />
+
 let saManagers: SimulatedAnnealingManager<RodWithAnchors>[] = [];
 
 let topDownViewContext: CanvasRenderingContext2D;
@@ -38,18 +40,27 @@ function start() {
     let anchors: Point3d[][] = [
         [
             new Point3d(-100,0,15),
-            new Point3d(0,29,10),
+            new Point3d(-60,29,10),
+            new Point3d(60,29,10),
             new Point3d(100,0,15),
         ],
         [
             new Point3d(-105, 0, 0),
-            new Point3d(0, 29.2, 0),
+            new Point3d(-55, 29.2, 0),
+            new Point3d(55, 29.2, 0),
             new Point3d(105, 0, 0)
         ],
         [
-            new Point3d(-50,0,-10),
-            new Point3d(0,10,-10),
-            new Point3d(50,0,-10),
+            new Point3d(-105, 0, -10),
+            new Point3d(-55, 29.2, -10),
+            new Point3d(55, 29.2, -10),
+            new Point3d(105, 0, -10)
+        ],
+        [
+            new Point3d(-50,0,-20),
+            new Point3d(-20,10,-20),
+            new Point3d(20,10,-20),
+            new Point3d(50,0,-20),
         ]
     ];
 
@@ -64,7 +75,7 @@ function start() {
     )
 
     for(let i = 0; i < anchors.length; i++) {
-        let rodLength = 80;
+        let rodLength = 120;
         const step = 200/rodLength;
         const points: Point3d[] = [];
         for(let j = 0; j < rodLength; j++) {
@@ -72,7 +83,7 @@ function start() {
         }
 
         let startRod = new RodWithAnchors(points, anchors[i], 70, 300);
-        saManagers[i] = new SimulatedAnnealingManager<RodWithAnchors>(startRod, 1000/*7500*/);
+        saManagers[i] = new SimulatedAnnealingManager<RodWithAnchors>(startRod, 2500);
     }
 
     takeStep();
@@ -97,16 +108,16 @@ function takeStep() {
         
     } else {
         console.log("DONE");
-        const aPanel = new Panel(saManagers[1].state.clipToAnchors(), saManagers[2].state.clipToAnchors());
-        const bPanel = new Panel(saManagers[0].state.clipToAnchors(), saManagers[1].state.clipToAnchors());
+        // const aPanel = new Panel(saManagers[1].state.clipToAnchors(), saManagers[2].state.clipToAnchors());
+        // const bPanel = new Panel(saManagers[0].state.clipToAnchors(), saManagers[1].state.clipToAnchors());
         const cPanel = new Panel(
-            saManagers[2].state.clipToAnchors(),
-            new RodWithAnchors(saManagers[2].state.clipToAnchors().points.map(p => new Point3d(p.x, -p.y, p.z)), [], 0, 0)
+            saManagers[3].state.clipToAnchors(),
+            new RodWithAnchors(saManagers[3].state.clipToAnchors().points.map(p => new Point3d(p.x, -p.y, p.z)), [], 0, 0)
         )
 
-        drawPanel(aPanel, flattenedContexts[0]);
-        drawPanel(bPanel, flattenedContexts[1]);
-        drawPanel(cPanel, flattenedContexts[2]);
+        // drawPanel(aPanel, flattenedContexts[0]);
+        // drawPanel(bPanel, flattenedContexts[1]);
+        drawPanel(cPanel, flattenedContexts[0]);
 
 
         // saManager = new SimulatedAnnealingManager<RodWithAnchors>(saManager.state);
